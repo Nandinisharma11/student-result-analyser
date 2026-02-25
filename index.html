@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Result Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3e;
+    --accent: #7c6ff7;
+    --accent2: #f7c948;
+    --accent3: #48f7b4;
+    --danger: #f74867;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND GRID */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,111,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,111,247,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  header .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 50%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header p {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .nav-tab {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .nav-tab:hover { color: var(--text); background: var(--card); }
+
+  .nav-tab.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* PANELS */
+  .panel { display: none; animation: fadeUp 0.3s ease; }
+  .panel.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* FORM CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: var(--accent2);
+    border-radius: 2px;
+  }
+
+  /* FORM ELEMENTS */
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+  label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus { border-color: var(--accent); }
+  input.error { border-color: var(--danger); }
+
+  .marks-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .marks-inputs input {
+    width: 80px;
+    text-align: center;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 11px 24px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #9d93ff; transform: translateY(-1px); }
+
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #ff6b84; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .btn-ghost:hover { background: rgba(124,111,247,0.1); }
+
+  /* MSG TOAST */
+  .msg {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-top: 12px;
+    display: none;
+  }
+  .msg.success { background: rgba(72,247,180,0.12); border: 1px solid var(--accent3); color: var(--accent3); display: block; }
+  .msg.error { background: rgba(247,72,103,0.12); border: 1px solid var(--danger); color: var(--danger); display: block; }
+
+  /* STUDENT TABLE */
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead tr {
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  th {
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: rgba(124,111,247,0.06); }
+
+  td {
+    padding: 12px 14px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .grade-badge {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .grade-A { background: rgba(72,247,180,0.18); color: var(--accent3); }
+  .grade-B { background: rgba(124,111,247,0.18); color: var(--accent); }
+  .grade-C { background: rgba(247,201,72,0.18); color: var(--accent2); }
+  .grade-D { background: rgba(247,201,72,0.1); color: #d4a820; }
+  .grade-F { background: rgba(247,72,103,0.18); color: var(--danger); }
+
+  .status-pass { color: var(--accent3); font-weight: 700; }
+  .status-fail { color: var(--danger); font-weight: 700; }
+
+  .del-btn {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Space Mono', monospace;
+  }
+  .del-btn:hover { background: var(--danger); color: #fff; }
+
+  /* RANK CARDS */
+  .rank-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .rank-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .rank-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+
+  .rank-card.rank-1 { border-color: var(--accent2); }
+  .rank-card.rank-2 { border-color: #c0c0c0; }
+  .rank-card.rank-3 { border-color: #cd7f32; }
+
+  .rank-num {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    opacity: 0.15;
+  }
+
+  .rank-medal {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .rank-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .rank-stats {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    display: flex;
+    gap: 12px;
+  }
+
+  /* TOPPER */
+  .topper-card {
+    background: linear-gradient(135deg, rgba(247,201,72,0.08), rgba(124,111,247,0.08));
+    border: 2px solid var(--accent2);
+    border-radius: 20px;
+    padding: 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .topper-crown { font-size: 56px; margin-bottom: 12px; }
+
+  .topper-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .topper-stats {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .topper-stat { text-align: center; }
+  .topper-stat .val {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--accent2);
+  }
+  .topper-stat .lbl { font-size: 10px; color: var(--muted); letter-spacing: 2px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* SEARCH RESULT */
+  .search-result-card {
+    background: var(--card);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .sr-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .sr-row:last-child { border-bottom: none; }
+  .sr-label { color: var(--muted); font-size: 11px; letter-spacing: 1px; }
+  .sr-val { color: var(--text); font-weight: 700; }
+
+  /* STATS ROW */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-box .n {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .stat-box .l { font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <div class="eyebrow">// academic tool</div>
+    <h1>Student Result Analyzer</h1>
+    <p>Manage students · Track marks · Generate rankings</p>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('add')">+ Add Student</button>
+    <button class="nav-tab" onclick="switchTab('update')">↻ Update Marks</button>
+    <button class="nav-tab" onclick="switchTab('search')">⌕ Search</button>
+    <button class="nav-tab" onclick="switchTab('all')">≡ All Students</button>
+    <button class="nav-tab" onclick="switchTab('ranks')">⬆ Rank List</button>
+    <button class="nav-tab" onclick="switchTab('topper')">★ Topper</button>
+  </div>
+
+  <!-- ADD STUDENT -->
+  <div class="panel active" id="panel-add">
+    <div class="card">
+      <div class="card-title">Add New Student</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Roll Number</label>
+          <input type="text" id="add-roll" placeholder="e.g. 101" />
+        </div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="add-name" placeholder="e.g. Ali Hassan" />
+        </div>
+        <div class="form-group">
+          <label>Number of Subjects</label>
+          <input type="number" id="add-subs" min="1" max="10" placeholder="e.g. 5" oninput="genMarkFields()" />
+        </div>
+      </div>
+      <div class="form-group" id="marks-wrap" style="display:none">
+        <label>Enter Marks (0–100)</label>
+        <div class="marks-inputs" id="marks-inputs"></div>
+      </div>
+      <div style="margin-top:20px">
+        <button class="btn btn-primary" onclick="addStudent()">ADD STUDENT</button>
+      </div>
+      <div class="msg" id="add-msg"></div>
+    </div>
+  </div>
+
+  <!-- UPDATE MARKS -->
+  <div class="panel" id="panel-update">
+    <div class="card">
+      <div class="card-title">Update Student Marks</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Roll Number</label>
+          <input type="text" id="upd-roll" placeholder="Enter roll number" />
+        </div>
+        <div class="form-group">
+          <label>Number of Subjects</label>
+          <input type="number" id="upd-subs" min="1" max="10" placeholder="e.g. 5" oninput="genUpdateMarkFields()" />
+        </div>
+      </div>
+      <div class="form-group" id="upd-marks-wrap" style="display:none">
+        <label>New Marks (0–100)</label>
+        <div class="marks-inputs" id="upd-marks-inputs"></div>
+      </div>
+      <div style="margin-top:20px">
+        <button class="btn btn-primary" onclick="updateStudent()">UPDATE MARKS</button>
+      </div>
+      <div class="msg" id="upd-msg"></div>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="panel" id="panel-search">
+    <div class="card">
+      <div class="card-title">Search Student</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Roll Number</label>
+          <input type="text" id="srch-roll" placeholder="Enter roll number" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="searchStudent()">SEARCH</button>
+      <div class="msg" id="srch-msg"></div>
+      <div class="search-result-card" id="srch-result"></div>
+    </div>
+  </div>
+
+  <!-- ALL STUDENTS -->
+  <div class="panel" id="panel-all">
+    <div class="stats-bar" id="stats-bar"></div>
+    <div class="card">
+      <div class="card-title">All Students</div>
+      <div class="table-wrap" id="all-table"></div>
+    </div>
+  </div>
+
+  <!-- RANK LIST -->
+  <div class="panel" id="panel-ranks">
+    <div class="card">
+      <div class="card-title">Rank List</div>
+      <div id="rank-container"></div>
+    </div>
+  </div>
+
+  <!-- TOPPER -->
+  <div class="panel" id="panel-topper">
+    <div class="card">
+      <div class="card-title">Class Topper</div>
+      <div id="topper-container"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ---- DATA STORE ----
+  let students = {}; // roll -> student obj
+
+  function calcGrade(avg) {
+    if (avg >= 90) return 'A';
+    if (avg >= 75) return 'B';
+    if (avg >= 60) return 'C';
+    if (avg >= 40) return 'D';
+    return 'F';
+  }
+
+  function makeStudent(roll, name, marks) {
+    const total = marks.reduce((a, b) => a + b, 0);
+    const avg = total / marks.length;
+    const grade = calcGrade(avg);
+    const status = avg >= 40 ? 'PASS' : 'FAIL';
+    return { roll, name, marks, total, avg: +avg.toFixed(2), grade, status };
+  }
+
+  function isNumber(s) { return /^\d+$/.test(s.trim()); }
+  function isValidName(s) { return /^[a-zA-Z ]+$/.test(s.trim()); }
+
+  // ---- TAB SWITCHING ----
+  function switchTab(tab) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    event.target.classList.add('active');
+
+    if (tab === 'all') renderAll();
+    if (tab === 'ranks') renderRanks();
+    if (tab === 'topper') renderTopper();
+  }
+
+  // ---- MSG HELPERS ----
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'msg ' + type;
+    setTimeout(() => el.className = 'msg', 3000);
+  }
+
+  // ---- MARK FIELDS ----
+  function genMarkFields() {
+    const n = parseInt(document.getElementById('add-subs').value);
+    const wrap = document.getElementById('marks-wrap');
+    const container = document.getElementById('marks-inputs');
+    if (!n || n < 1) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    container.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.min = 0; inp.max = 100;
+      inp.placeholder = 'Sub ' + (i + 1);
+      inp.id = 'mark-' + i;
+      container.appendChild(inp);
+    }
+  }
+
+  function genUpdateMarkFields() {
+    const n = parseInt(document.getElementById('upd-subs').value);
+    const wrap = document.getElementById('upd-marks-wrap');
+    const container = document.getElementById('upd-marks-inputs');
+    if (!n || n < 1) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    container.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.min = 0; inp.max = 100;
+      inp.placeholder = 'Sub ' + (i + 1);
+      inp.id = 'upd-mark-' + i;
+      container.appendChild(inp);
+    }
+  }
+
+  // ---- ADD STUDENT ----
+  function addStudent() {
+    const rollStr = document.getElementById('add-roll').value.trim();
+    const name = document.getElementById('add-name').value.trim();
+    const n = parseInt(document.getElementById('add-subs').value);
+
+    if (!isNumber(rollStr)) { showMsg('add-msg', 'Invalid Roll! Numbers only.', 'error'); return; }
+    if (!isValidName(name)) { showMsg('add-msg', 'Invalid Name! Letters only.', 'error'); return; }
+    if (!n || n < 1) { showMsg('add-msg', 'Enter number of subjects.', 'error'); return; }
+
+    const roll = parseInt(rollStr);
+    if (students[roll]) { showMsg('add-msg', 'Student with this roll already exists!', 'error'); return; }
+
+    const marks = [];
+    for (let i = 0; i < n; i++) {
+      const v = parseFloat(document.getElementById('mark-' + i).value);
+      if (isNaN(v) || v < 0 || v > 100) { showMsg('add-msg', 'Enter valid marks (0-100) for all subjects.', 'error'); return; }
+      marks.push(v);
+    }
+
+    students[roll] = makeStudent(roll, name, marks);
+    showMsg('add-msg', `Student "${name}" added successfully!`, 'success');
+
+    // Reset
+    document.getElementById('add-roll').value = '';
+    document.getElementById('add-name').value = '';
+    document.getElementById('add-subs').value = '';
+    document.getElementById('marks-wrap').style.display = 'none';
+    document.getElementById('marks-inputs').innerHTML = '';
+  }
+
+  // ---- UPDATE MARKS ----
+  function updateStudent() {
+    const rollStr = document.getElementById('upd-roll').value.trim();
+    const n = parseInt(document.getElementById('upd-subs').value);
+
+    if (!isNumber(rollStr)) { showMsg('upd-msg', 'Invalid Roll!', 'error'); return; }
+    const roll = parseInt(rollStr);
+    if (!students[roll]) { showMsg('upd-msg', 'Student not found!', 'error'); return; }
+    if (!n || n < 1) { showMsg('upd-msg', 'Enter number of subjects.', 'error'); return; }
+
+    const marks = [];
+    for (let i = 0; i < n; i++) {
+      const v = parseFloat(document.getElementById('upd-mark-' + i).value);
+      if (isNaN(v) || v < 0 || v > 100) { showMsg('upd-msg', 'Enter valid marks (0-100).', 'error'); return; }
+      marks.push(v);
+    }
+
+    students[roll] = makeStudent(roll, students[roll].name, marks);
+    showMsg('upd-msg', 'Marks updated successfully!', 'success');
+  }
+
+  // ---- SEARCH ----
+  function searchStudent() {
+    const rollStr = document.getElementById('srch-roll').value.trim();
+    const resultEl = document.getElementById('srch-result');
+
+    if (!isNumber(rollStr)) { showMsg('srch-msg', 'Invalid Roll!', 'error'); resultEl.style.display = 'none'; return; }
+    const roll = parseInt(rollStr);
+    const s = students[roll];
+
+    if (!s) { showMsg('srch-msg', 'Student not found!', 'error'); resultEl.style.display = 'none'; return; }
+
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `
+      <div class="sr-row"><span class="sr-label">ROLL</span><span class="sr-val">${s.roll}</span></div>
+      <div class="sr-row"><span class="sr-label">NAME</span><span class="sr-val">${s.name}</span></div>
+      <div class="sr-row"><span class="sr-label">SUBJECTS</span><span class="sr-val">${s.marks.length}</span></div>
+      <div class="sr-row"><span class="sr-label">MARKS</span><span class="sr-val">${s.marks.join(', ')}</span></div>
+      <div class="sr-row"><span class="sr-label">TOTAL</span><span class="sr-val">${s.total}</span></div>
+      <div class="sr-row"><span class="sr-label">AVERAGE</span><span class="sr-val">${s.avg}%</span></div>
+      <div class="sr-row"><span class="sr-label">GRADE</span><span class="sr-val"><span class="grade-badge grade-${s.grade}">${s.grade}</span></span></div>
+      <div class="sr-row"><span class="sr-label">STATUS</span><span class="sr-val ${s.status === 'PASS' ? 'status-pass' : 'status-fail'}">${s.status}</span></div>
+    `;
+    showMsg('srch-msg', '', '');
+  }
+
+  // ---- ALL STUDENTS ----
+  function renderAll() {
+    const list = Object.values(students);
+    const statsEl = document.getElementById('stats-bar');
+    const tableEl = document.getElementById('all-table');
+
+    const total = list.length;
+    const passed = list.filter(s => s.status === 'PASS').length;
+    const failed = total - passed;
+    const avgScore = total ? (list.reduce((a, s) => a + s.avg, 0) / total).toFixed(1) : 0;
+
+    statsEl.innerHTML = `
+      <div class="stat-box"><div class="n">${total}</div><div class="l">TOTAL STUDENTS</div></div>
+      <div class="stat-box"><div class="n" style="color:var(--accent3)">${passed}</div><div class="l">PASSED</div></div>
+      <div class="stat-box"><div class="n" style="color:var(--danger)">${failed}</div><div class="l">FAILED</div></div>
+      <div class="stat-box"><div class="n" style="color:var(--accent2)">${avgScore}%</div><div class="l">CLASS AVG</div></div>
+    `;
+
+    if (!list.length) {
+      tableEl.innerHTML = '<div class="empty-state"><div class="icon">📭</div>No students yet. Add some!</div>';
+      return;
+    }
+
+    tableEl.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Roll</th><th>Name</th><th>Subjects</th><th>Total</th><th>Avg</th><th>Grade</th><th>Status</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.sort((a,b) => a.roll - b.roll).map(s => `
+            <tr>
+              <td>${s.roll}</td>
+              <td>${s.name}</td>
+              <td>${s.marks.length}</td>
+              <td>${s.total}</td>
+              <td>${s.avg}%</td>
+              <td><span class="grade-badge grade-${s.grade}">${s.grade}</span></td>
+              <td class="${s.status === 'PASS' ? 'status-pass' : 'status-fail'}">${s.status}</td>
+              <td><button class="del-btn" onclick="deleteStudent(${s.roll})">DELETE</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function deleteStudent(roll) {
+    if (confirm('Delete student with roll ' + roll + '?')) {
+      delete students[roll];
+      renderAll();
+    }
+  }
+
+  // ---- RANKS ----
+  function renderRanks() {
+    const list = Object.values(students).sort((a, b) => b.total - a.total);
+    const el = document.getElementById('rank-container');
+
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">🏆</div>No students to rank yet.</div>';
+      return;
+    }
+
+    const medals = ['🥇', '🥈', '🥉'];
+
+    el.innerHTML = `<div class="rank-grid">
+      ${list.map((s, i) => `
+        <div class="rank-card rank-${i+1}">
+          <div class="rank-num">#${i+1}</div>
+          <div class="rank-medal">${medals[i] || '🎖️'}</div>
+          <div class="rank-name">${s.name}</div>
+          <div style="font-size:11px;color:var(--muted)">Roll: ${s.roll}</div>
+          <div class="rank-stats">
+            <span>Total: <b style="color:var(--text)">${s.total}</b></span>
+            <span>Avg: <b style="color:var(--text)">${s.avg}%</b></span>
+            <span><b class="grade-badge grade-${s.grade}" style="width:auto;padding:0 6px">${s.grade}</b></span>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+  }
+
+  // ---- TOPPER ----
+  function renderTopper() {
+    const list = Object.values(students);
+    const el = document.getElementById('topper-container');
+
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">👑</div>No students available.</div>';
+      return;
+    }
+
+    const top = list.reduce((a, b) => b.total > a.total ? b : a);
+
+    el.innerHTML = `
+      <div class="topper-card">
+        <div class="topper-crown">👑</div>
+        <div class="topper-name">${top.name}</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:6px">Roll No. ${top.roll}</div>
+        <div class="topper-stats">
+          <div class="topper-stat"><div class="val">${top.total}</div><div class="lbl">TOTAL</div></div>
+          <div class="topper-stat"><div class="val">${top.avg}%</div><div class="lbl">AVERAGE</div></div>
+          <div class="topper-stat"><div class="val">${top.grade}</div><div class="lbl">GRADE</div></div>
+          <div class="topper-stat"><div class="val" style="color:var(--accent3)">${top.status}</div><div class="lbl">STATUS</div></div>
+        </div>
+      </div>
+    `;
+  }
+</script>
+</body>
+</html>
